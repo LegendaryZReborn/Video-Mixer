@@ -1,4 +1,4 @@
-from clipShuffle2 import *
+from videomixer import *
 from tkinter import *
 from tkinter import filedialog, scrolledtext, ttk
 

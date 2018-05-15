@@ -10,7 +10,7 @@ import threading
 import numpy as np
 import pygame as pg
 import math
-from clipShuffle2 import *
+from videomixer import *
 
 pg.init()
 
@@ -430,7 +430,6 @@ finalClip = mixClips(filenames, intervals, audioClip.duration, audioClip)
 
 root = Tk()
 root.geometry("800x480")
-#c = VideoFileClip(clip_dir + "NarutovsSasuke.mp4")
 all = VideoPlayer(root, clip=finalClip)
 root.title('Tkinter Player')
 root.mainloop()
