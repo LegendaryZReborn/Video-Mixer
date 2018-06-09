@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import ttk
+from tkinter import filedialog, ttk
 from PIL import Image, ImageTk
 from moviepy.editor import VideoFileClip, AudioFileClip
 from moviepy.decorators import requires_duration
@@ -42,6 +42,9 @@ class VideoPlayer(Frame):
 		controlFrame.grid_columnconfigure(0, weight=1, uniform='third')
 		controlFrame.grid_columnconfigure(1, weight=1, uniform='third')
 		controlFrame.grid_columnconfigure(2, weight=1, uniform='third')
+
+		extraFrame = Frame(self)
+		extraFrame.pack(side="top", anchor="center", fill=X, expand=False, pady=10)
 
 		emptyFrame = Frame(master=controlFrame)
 		emptyFrame.grid(row=0, column=0, sticky="nsew")
@@ -87,6 +90,11 @@ class VideoPlayer(Frame):
 		stopButton.pack(side="left")
 		pauseButton = Button(master=buttonsFrame, width=40, height=40, image=self.skipForwardImg, text="skip forward", relief = FLAT, command=action_skipf)
 		pauseButton.pack(side="left")
+		
+		generateButton = Button(master=extraFrame, text="Generate", command=self.generateClip)
+		generateButton.pack(side="top")
+		self.progressBar = ttk.Progressbar(master=extraFrame, mode="indeterminate")
+		self.progressBar.pack(side="top")
 		
 		volumeScale = Scale(master=othersFrame, orient=HORIZONTAL, to=100, resolution=1, command=self.volumeScrub)
 		volumeScale.pack(side="right", anchor=NE)
@@ -255,7 +263,7 @@ class VideoPlayer(Frame):
 		  video and audio during ``VideoClip.preview()``.
 		
 		"""
-		self.duration = clip.duration
+		#self.duration = clip.duration
 		
 		pg.mixer.quit()
 		
@@ -415,6 +423,31 @@ class VideoPlayer(Frame):
 		
 		return
 		
+	def thread(self, filenames, audio_file):
+		audioClip = AudioFileClip(audio_file)
+		print(audio_file)
+		intervals = [3, 4, 5]
+		finalClip = mixClips(filenames, intervals, audioClip.duration, audioClip)		
+		self.setClip(finalClip)
+		self.progressBar.stop()
+		return
+		
+	def generateClip(self):
+		filetuple = filedialog.askopenfilenames(parent=self, title="Choose your video files")
+		filenames = list(filetuple)
+		
+		audio_filename = filedialog.askopenfilenames(parent=self, title="Choose your audio file", filetypes = (("all files","*.*"), ("mp3 files","*.mp3"), ("m4a files", "*.m4a")))
+		audio_filename = audio_filename[0]
+		
+		self.progressBar.start([3])
+		thread = threading.Thread(target=self.thread, 
+				args = (filenames, audio_filename))
+		thread.setDaemon(True)
+		
+		thread.start()
+		
+		return
+	
 	def onClose(self, root):
 		self.stopFlag.set()
 		time.sleep(0.2) 	#sleeps a bit to ensure no segmentation fault caused by straggling daemon threads
@@ -422,15 +455,10 @@ class VideoPlayer(Frame):
 		
 		return
 
-intervals = [2, 2, 3, 4]
-
-filenames = getFilesInDir(clip_dir)
-audioClip = AudioFileClip(audio_dir + "Everybody's Circulation.mp3")
-finalClip = mixClips(filenames, intervals, audioClip.duration, audioClip)		
 
 root = Tk()
 root.geometry("800x480")
-all = VideoPlayer(root, clip=finalClip)
+all = VideoPlayer(root)
 root.title('Tkinter Player')
 root.mainloop()
 
